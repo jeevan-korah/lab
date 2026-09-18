@@ -6,16 +6,30 @@ int top = -1, ip = 0;
 
 void shift()
 {
-    stack[++top] = input[ip++];
+    if (input[ip] == 'i' && input[ip + 1] == 'd')
+    {
+        stack[++top] = 'i';
+        stack[++top] = 'd';
+        ip += 2;
+    }
+    else
+    {
+        stack[++top] = input[ip++];
+    }
+
     stack[top + 1] = '\0';
 }
 
 int reduce()
 {
-    /* F -> i */
-    if (top >= 0 && stack[top] == 'i')
+    /* F -> id */
+    if (top >= 1 &&
+        stack[top - 1] == 'i' &&
+        stack[top] == 'd')
     {
+        top--;
         stack[top] = 'F';
+        stack[top + 1] = '\0';
         return 1;
     }
 
@@ -98,7 +112,7 @@ int reduce()
 
 int main()
 {
-    printf("Enter arithmetic expression (use i for identifier): ");
+    printf("Enter arithmetic expression (use id for identifier): ");
     scanf("%s", input);
 
     strcat(input, "$");
