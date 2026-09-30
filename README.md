@@ -1,146 +1,90 @@
 #include <stdio.h>
 #include <string.h>
-
-char stack[100], input[100];
-int top = -1, ip = 0;
-
-void shift()
-{
-    if (input[ip] == 'i' && input[ip + 1] == 'd')
-    {
-        stack[++top] = 'i';
-        stack[++top] = 'd';
-        ip += 2;
+char p[20][20],f[26][20],fo[26][20];
+int n;
+int add(char a[],char b) {
+    int i;
+    for(i=0;a[i];i++) {
+        if(a[i]==b) return 0;
     }
-    else
-    {
-        stack[++top] = input[ip++];
-    }
-
-    stack[top + 1] = '\0';
+    a[i]=b;
+    a[i+1]='\0';
+    return 1;
 }
-
-int reduce()
-{
-    /* F -> id */
-    if (top >= 1 &&
-        stack[top - 1] == 'i' &&
-        stack[top] == 'd')
-    {
-        top--;
-        stack[top] = 'F';
-        stack[top + 1] = '\0';
-        return 1;
+int copy(char a[],char b[]) {
+    int i,c=0;
+    for(i=0;b[i];i++) {
+        if(b[i]!='#'&&add(a,b[i])) c=1;
     }
-
-    /* F -> (E) */
-    if (top >= 2 &&
-        stack[top - 2] == '(' &&
-        stack[top - 1] == 'E' &&
-        stack[top] == ')')
-    {
-        top -= 2;
-        stack[top] = 'F';
-        stack[top + 1] = '\0';
-        return 1;
-    }
-
-    /* T -> T * F */
-    if (top >= 2 &&
-        stack[top - 2] == 'T' &&
-        stack[top - 1] == '*' &&
-        stack[top] == 'F')
-    {
-        top -= 2;
-        stack[top] = 'T';
-        stack[top + 1] = '\0';
-        return 1;
-    }
-
-    /* T -> T / F */
-    if (top >= 2 &&
-        stack[top - 2] == 'T' &&
-        stack[top - 1] == '/' &&
-        stack[top] == 'F')
-    {
-        top -= 2;
-        stack[top] = 'T';
-        stack[top + 1] = '\0';
-        return 1;
-    }
-
-    /* T -> F */
-    if (top >= 0 && stack[top] == 'F')
-    {
-        stack[top] = 'T';
-        return 1;
-    }
-
-    /* E -> E + T */
-    if (top >= 2 &&
-        stack[top - 2] == 'E' &&
-        stack[top - 1] == '+' &&
-        stack[top] == 'T')
-    {
-        top -= 2;
-        stack[top] = 'E';
-        stack[top + 1] = '\0';
-        return 1;
-    }
-
-    /* E -> E - T */
-    if (top >= 2 &&
-        stack[top - 2] == 'E' &&
-        stack[top - 1] == '-' &&
-        stack[top] == 'T')
-    {
-        top -= 2;
-        stack[top] = 'E';
-        stack[top + 1] = '\0';
-        return 1;
-    }
-
-    /* E -> T */
-    if (top >= 0 && stack[top] == 'T')
-    {
-        stack[top] = 'E';
-        return 1;
-    }
-
-    return 0;
+    return c;
 }
-
-int main()
-{
-    printf("Enter arithmetic expression (use id for identifier): ");
-    scanf("%s", input);
-
-    strcat(input, "$");
-
-    printf("\nStack\tInput\tAction\n");
-    printf("--------------------------------\n");
-
-    while (!(stack[0] == 'E' && top == 0 && input[ip] == '$'))
-    {
-        if (reduce())
-        {
-            printf("%s\t%s\tReduce\n", stack, input + ip);
-        }
-        else if (input[ip] != '$')
-        {
-            shift();
-            printf("%s\t%s\tShift\n", stack, input + ip);
-        }
-        else
-        {
-            printf("%s\t%s\tError\n", stack, input + ip);
-            printf("\nString Rejected!\n");
-            return 0;
+void show(char name[],char a[][20]) {
+    int i,j;
+    printf("\n%s:\n",name);
+    for(i=0;i<n;i++) {
+        if(i==0||p[i][0]!=p[i-1][0]) {
+            printf("%s(%c) = { ",name,p[i][0]);
+            for(j=0;a[p[i][0]-'A'][j];j++) {
+                printf("%c ",a[p[i][0]-'A'][j]);
+            }
+            printf("}\n");
         }
     }
-
-    printf("%s\t$\tAccept\n", stack);
-    printf("\nString Accepted!\n");
-
+}
+int main() {
+    int i,j,k,c,e;
+    char l,s,x;
+    printf("Enter number of productions: ");
+    scanf("%d",&n);
+    printf("Enter productions:\n");
+    for(i=0;i<n;i++) {
+        scanf("%s",p[i]);
+    }
+    do {
+        c=0;
+        for(i=0;i<n;i++) {
+            l=p[i][0];
+            for(j=2;p[i][j];j++) {
+                s=p[i][j];
+                if(s<'A'||s>'Z') {
+                    if(add(f[l-'A'],s)) c=1;
+                    break;
+                }
+                if(copy(f[l-'A'],f[s-'A'])) c=1;
+                if(!strchr(f[s-'A'],'#')) break;
+                if(!p[i][j+1]&&add(f[l-'A'],'#')) c=1;
+            }
+        }
+    }while(c);
+    add(fo[p[0][0]-'A'],'$');
+    do {
+        c=0;
+        for(i=0;i<n;i++) {
+            l=p[i][0];
+            for(j=2;p[i][j];j++) {
+                s=p[i][j];
+                if(s<'A'||s>'Z') continue;
+                e=1;
+                for(k=j+1;p[i][k];k++) {
+                    x=p[i][k];
+                    if(x<'A'||x>'Z') {
+                        if(add(fo[s-'A'],x)) c=1;
+                        e=0;
+                        break;
+                    }
+                    if(copy(fo[s-'A'],f[x-'A'])) c=1;
+                    if(!strchr(f[x-'A'],'#')) {
+                        e=0;
+                        break;
+                    }
+                }
+                if(e) {
+                    if(copy(fo[s-'A'],fo[l-'A'])) c=1;
+                }
+            }
+        }
+    }while(c);
+    show("FIRST",f);
+    show("FOLLOW",fo);
     return 0;
 }
